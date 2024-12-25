@@ -3,10 +3,12 @@ import part2
 
 physicalMemory = {}
 tlb = []
-pageTable = []
+pageTable = [-1] * 256
+pageTable_queue = []
 pageFaultCounter = 0
 tlbHitCounter = 0
 addressReadCounter = 0
+pagenum_table = set()
 
 
 if __name__ == '__main__':
@@ -30,11 +32,11 @@ if __name__ == '__main__':
                 tlbHitCounter += 1
 
             if tlbHit != 1:
-                pageTableTrue = part1.checkPageTable(pageNumber, logicalAddress, offset, addressReadCounter, pageTable, physicalMemory, outputFile)
+                pageTableTrue = part1.checkPageTable(pageNumber, logicalAddress, offset, addressReadCounter, pageTable_queue, pageTable,physicalMemory, outputFile)
 
             if pageTableTrue != 1 and tlbHit != 1:
                 print("This is a page fault!")
-                part2.pageFaultHandler(pageNumber, tlb, pageTable, physicalMemory)
+                part2.pageFaultHandler(pageNumber, tlb, pageTable_queue, pageTable, physicalMemory)
                 pageFaultCounter += 1
                 part1.checkTLB(pageNumber, physicalMemory, offset, logicalAddress, tlb, addressReadCounter, outputFile)
 
@@ -49,7 +51,6 @@ if __name__ == '__main__':
     print(physicalMemory)
     print(tlb)
     print (pageTable)
-
     outputFile.close()
     addressFile.close()
     

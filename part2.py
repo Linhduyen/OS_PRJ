@@ -1,7 +1,7 @@
 # import struct
 
 
-def pageFaultHandler(pageNumber, tlb, pageTable, physicalMemory):
+def pageFaultHandler(pageNumber, tlb, pageTable_queue, pageTable, physicalMemory):
     if int(pageNumber) < 256:
         frameNumber = None
         for i in range(128):
@@ -10,9 +10,12 @@ def pageFaultHandler(pageNumber, tlb, pageTable, physicalMemory):
             else:
                 frameNumber = str(i)
                 break
+
         # if is None it's mean page table is over 128. Then move the earliest out, then the new one is in.
         if frameNumber is None: 
-            removed_entry = pageTable.pop(0)
+            removed_entry = pageTable_queue.pop(0)
+            removed_page = removed_entry[0]
+            pageTable[removed_page] = -1
             removed_frame = removed_entry[1]
             frameNumber = removed_frame
             if int(removed_frame) in physicalMemory.keys():
@@ -40,7 +43,7 @@ def pageFaultHandler(pageNumber, tlb, pageTable, physicalMemory):
         return
 
     updateTLB(pageNumber, frameNumber, tlb)
-    updatePageTable(pageNumber, frameNumber, pageTable, physicalMemory)
+    updatePageTable(pageNumber, frameNumber, pageTable_queue, pageTable,physicalMemory)
 
 
 def updateTLB(pageNumber, frameNumber, tlb):
@@ -55,9 +58,10 @@ def updateTLB(pageNumber, frameNumber, tlb):
     print('Successfully update TLB with pageNumber: ' + str(pageNumber) + ', frameNumber: ' + str(frameNumber) + '!')
 
 
-def updatePageTable(pageNumber, frameNumber, pageTable, physicalMemory):
+def updatePageTable(pageNumber, frameNumber, pageTable_queue, pageTable, physicalMemory):
     # remove list[0], append new item at the end
-    pageTable.append([pageNumber, frameNumber])
+    pageTable_queue.append([pageNumber, frameNumber])
+    pageTable[pageNumber] = frameNumber
     print('Successfully update pageTable table with pageNumber: ' + str(pageNumber) + ', frameNumber: ' + str(frameNumber) + '!')
 
 
@@ -70,11 +74,14 @@ def updateTLBCounter(latestEntryIndex, tlb):
     print('Successfully update TLB with new sequence using LRU!')
 
 
-def updatepageTableCounter(latestEntryIndex, pageTable):
+def updatepageTableCounter(pageNumber, pageTable_queue):
     # remove list[latestEntryIndex], append new item at the end
-    latestEntry = pageTable[latestEntryIndex]
-    pageTable.pop(latestEntryIndex)
-    pageTable.append(latestEntry)
+    for i in range(len(pageTable_queue)): 
+        if pageNumber == pageTable_queue[i][0]:
+            latestEntryIndex = i
+    latestEntry = pageTable_queue[latestEntryIndex]
+    pageTable_queue.pop(latestEntryIndex)
+    pageTable_queue.append(latestEntry)
 
     print('Successfully update page table with new sequence using LRU!')
 
