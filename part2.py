@@ -1,18 +1,26 @@
-
-
-
-
 # import struct
+
+
 def pageFaultHandler(pageNumber, tlb, pageTable, physicalMemory):
     if int(pageNumber) < 256:
-        for i in range(256):
+        frameNumber = None
+        for i in range(128):
             if i in physicalMemory.keys():
                 continue
             else:
                 frameNumber = str(i)
                 break
-
+        # if is None it's mean page table is over 128. Then move the earliest out, then the new one is in.
+        if frameNumber is None: 
+            removed_entry = pageTable.pop(0)
+            removed_frame = removed_entry[1]
+            frameNumber = removed_frame
+            if int(removed_frame) in physicalMemory.keys():
+                del physicalMemory[int(removed_frame)]
+        
         backStore = open("BACKING_STORE.bin", "rb")
+        
+        print (physicalMemory.keys())
         physicalMemory[int(frameNumber)] = []
 
         for i in range(256):
@@ -32,7 +40,7 @@ def pageFaultHandler(pageNumber, tlb, pageTable, physicalMemory):
         return
 
     updateTLB(pageNumber, frameNumber, tlb)
-    updatePageTable(pageNumber, frameNumber, pageTable)
+    updatePageTable(pageNumber, frameNumber, pageTable, physicalMemory)
 
 
 def updateTLB(pageNumber, frameNumber, tlb):
@@ -47,14 +55,9 @@ def updateTLB(pageNumber, frameNumber, tlb):
     print('Successfully update TLB with pageNumber: ' + str(pageNumber) + ', frameNumber: ' + str(frameNumber) + '!')
 
 
-def updatePageTable(pageNumber, frameNumber, pageTable):
+def updatePageTable(pageNumber, frameNumber, pageTable, physicalMemory):
     # remove list[0], append new item at the end
-    if len(pageTable) < 256:
-        pageTable.append([pageNumber, frameNumber])
-    else:
-        pageTable.pop(0)
-        pageTable.append([pageNumber, frameNumber])
-
+    pageTable.append([pageNumber, frameNumber])
     print('Successfully update pageTable table with pageNumber: ' + str(pageNumber) + ', frameNumber: ' + str(frameNumber) + '!')
 
 
